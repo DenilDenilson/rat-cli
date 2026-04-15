@@ -177,6 +177,11 @@ int main(int argc, char **argv) {
         return 1; // Esto es un error
     }
 
+    if (argc == 2 && strcmp(argv[1], "--version") == 0) {
+        printf("rat v0.1.0\n");
+        return 0;
+    }
+
     if (argc == 2) {
         path = argv[1];
     }
