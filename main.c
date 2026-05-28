@@ -10,6 +10,7 @@
 
 const char *ignored_dirs[] = {
     ".git",
+    ".venv",
     "node_modules",
     "build",
     ".next",
@@ -34,6 +35,9 @@ const char *ignored_exts[] = {
     ".jpg", ".jpeg", ".png", ".gif",
     ".pdf", ".zip", ".tar", ".rar",
     ".gz", ".exe", ".bin", ".so",
+    ".dll", ".dylib", ".class", ".o",
+    ".exe", ".hex", ".bin", ".iso",
+    ".mp4", ".avi", ".mkv", ".mp3",
     NULL
 };
 
@@ -82,7 +86,7 @@ int join_path(char *buf, size_t bufsize, const char *base, const char *name) {
     int needs_slash = (base_len > 0 && base[base_len - 1] != '/');
 
     size_t total = base_len + needs_slash + name_len + 1; // +1 para el \0
-    if (total > bufsize) return 1;
+    if (total > bufsize) return -1;
 
     memcpy(buf, base, base_len);
 
@@ -168,17 +172,56 @@ int list_directory(const char *path) {
     return 0;
 }
 
+void print_string_list(const char *title, const char *items[]) {
+    printf("%s\n", title);
+
+    for (int i = 0; items[i] != NULL; i++) {
+        printf("  %s\n", items[i]);
+    }
+}
+
+void print_help(const char *prog_name) {
+    printf("uso: %s [directorio]\n", prog_name);
+    printf("\n");
+    printf("Herramienta CLI para recorrer directorios recursivamente e imprimir archivos.\n");
+    printf("\n");
+    printf("Opciones:\n");
+    printf("  -h, --help       muestra esta ayuda\n");
+    printf("  --version        muestra la versión\n");
+    printf("  -di              lista los directorios ignorados\n");
+    printf("  -ei              lista las extensiones ignoradas\n");
+}
+
 int main(int argc, char **argv) {
     const char *path = ".";
-    
+
     if (argc > 2) {
         fprintf(stderr, "uso: %s [directorio]\n", argv[0]);
+        return 1;
+    }
 
-        return 1; // Esto es un error
+    if (argc == 2 && strcmp(argv[1], "-h") == 0) {
+        print_help(argv[0]);
+        return 0;
+    }
+
+    if (argc == 2 && strcmp(argv[1], "--help") == 0) {
+        print_help(argv[0]);
+        return 0;
     }
 
     if (argc == 2 && strcmp(argv[1], "--version") == 0) {
         printf("rat v0.1.0\n");
+        return 0;
+    }
+
+    if (argc == 2 && strcmp(argv[1], "-di") == 0) {
+        print_string_list("Directorios ignorados:", ignored_dirs);
+        return 0;
+    }
+
+    if (argc == 2 && strcmp(argv[1], "-ei") == 0) {
+        print_string_list("Extensiones ignoradas:", ignored_exts);
         return 0;
     }
 
