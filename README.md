@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.3.0-16a34a?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.5.0-16a34a?style=flat-square">
   <img alt="Language" src="https://img.shields.io/badge/C-111?style=flat-square&logo=c">
   <img alt="Platform" src="https://img.shields.io/badge/Unix%20CLI-111?style=flat-square">
   <img alt="Use case" src="https://img.shields.io/badge/contexto%20para-LLMs-0891b2?style=flat-square">
@@ -82,8 +82,7 @@ rat: Procesando ruta test
 === FILE: test/raw/ignore.c ===
 // Esto debe ignorarse
 
-=== FILE: test/Makefile ===
-Makefile content
+[SKIPPED NO EXT] test/Makefile
 
 
 [DIR] test/assets
@@ -91,8 +90,7 @@ Makefile content
 
 [SKIPPED BY EXT] test/assets/image.jpg
 
-=== FILE: test/README ===
-README content
+[SKIPPED NO EXT] test/README
 
 
 [DIR] test/src
@@ -117,6 +115,7 @@ int main(){return 0;}
   `dist`, `.next` y `__pycache__`
 - Ignora extensiones binarias o multimedia como `.jpg`, `.png`, `.pdf`, `.zip`
   o `.so`
+- Ignora archivos sin extensión para evitar volcar binarios como ejecutables
 - No sigue symlinks como directorios
 - Omite archivos mayores a `1000 KB`
 - Genera una salida simple y copiable
@@ -127,7 +126,7 @@ int main(){return 0;}
 - `--version`: muestra la versión
 - `-di`: lista los directorios ignorados
 - `-ei`: lista las extensiones ignoradas
-- `-i <nombre_dir>`: agrega un directorio extra a ignorar en esta ejecución
+- `-i <nombre_dir...>`: agrega uno o más directorios extra a ignorar en esta ejecución
 
 ## 🚫 Extensiones ignoradas y filtros
 
@@ -136,8 +135,9 @@ normalmente no ayudan al LLM a entender el proyecto.
 
 | Tipo | Valores |
 | ---- | ------- |
-| Directorios ignorados | `.git`, `.venv`, `node_modules`, `build`, `.next`, `dist`, `__pycache__` |
+| Directorios ignorados | `.git`, `.venv`, `node_modules`, `build`, `.next`, `dist`, `.astro`, `.cache`, `__pycache__` |
 | Extensiones ignoradas | `.jpg`, `.jpeg`, `.png`, `.gif`, `.pdf`, `.zip`, `.tar`, `.rar`, `.gz`, `.exe`, `.bin`, `.so`, `.dll`, `.dylib`, `.class`, `.o`, `.hex`, `.iso` |
+| Archivos sin extensión | Se omiten para evitar imprimir binarios como ejecutables compilados |
 | Tamaño máximo | `1000 KB` por archivo |
 | Symlinks | Se reportan como `[SYMLINK]`, pero no se siguen como directorios |
 
@@ -164,7 +164,7 @@ gcc main.c -o rat
 ./rat --version
 ./rat -di
 ./rat -ei
-./rat . -i vendor
+./rat . -i vendor cache tmp
 ./rat . | wl-copy
 ```
 

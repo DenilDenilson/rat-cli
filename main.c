@@ -12,7 +12,7 @@
 #endif
 
 #define MAX_FILE_SIZE (1000 * 1024)
-#define RAT_VERSION   "0.3.0"
+#define RAT_VERSION   "0.5.0"
 
 const char *ignored_dirs[] = {
     ".git",
@@ -21,6 +21,8 @@ const char *ignored_dirs[] = {
     "build",
     ".next",
     "dist",
+    ".astro",
+    ".cache",
     "__pycache__",
     NULL
 };
@@ -43,7 +45,7 @@ void print_string_list(const char *title, const char *items[]) {
 }
 
 void print_help(const char *prog_name) {
-    printf("uso: %s [directorio] [-i nombre_dir]\n", prog_name);
+    printf("uso: %s [directorio] [-i nombre_dir...]\n", prog_name);
     printf("\n");
     printf("Herramienta CLI para recorrer directorios recursivamente e imprimir archivos.\n");
     printf("\n");
@@ -52,14 +54,16 @@ void print_help(const char *prog_name) {
     printf("  --version        muestra la versión\n");
     printf("  -di              lista los directorios ignorados\n");
     printf("  -ei              lista las extensiones ignoradas\n");
-    printf("  -i nombre_dir    ignora además un directorio por nombre en esta ejecución\n");
+    printf("  -i nombre_dir... ignora además uno o más directorios por nombre en esta ejecución\n");
 }
 
-int should_skip_dir(const char *name, const char *extra_ignored_dir) {
+int should_skip_dir(const char *name, char **extra_ignored_dirs, int extra_ignored_count) {
     if (name == NULL) return 1;
 
-    if (extra_ignored_dir != NULL && strcmp(name, extra_ignored_dir) == 0) {
-        return 1;
+    for (int i = 0; i < extra_ignored_count; i++) {
+        if (strcmp(name, extra_ignored_dirs[i]) == 0) {
+            return 1;
+        }
     }
 
     for (int i = 0; ignored_dirs[i] != NULL; i++) {
@@ -89,6 +93,10 @@ int should_skip_file(const char *name) {
     }
 
     return 0;
+}
+
+int should_skip_file_without_extension(const char *name) {
+    return get_extension(name) == NULL;
 }
 
 void print_file(const char *path) {
@@ -128,7 +136,7 @@ int join_path(char *buf, size_t bufsize, const char *base, const char *name) {
     return 0;
 }
 
-int list_directory(const char *path, const char *extra_ignored_dir) {
+int list_directory(const char *path, char **extra_ignored_dirs, int extra_ignored_count) {
     DIR *dir = opendir(path);
     if (!dir) {
         fprintf(stderr, "rat: no se pudo abrir '%s': '%s'\n", path, strerror(errno));
@@ -155,13 +163,13 @@ int list_directory(const char *path, const char *extra_ignored_dir) {
         }
 
         if (S_ISDIR(st.st_mode)) {
-            if (should_skip_dir(entry->d_name, extra_ignored_dir)) {
+            if (should_skip_dir(entry->d_name, extra_ignored_dirs, extra_ignored_count)) {
                 printf("[SKIPPED DIR] %s\n", fullpath);
                 continue;
             }
 
             printf("[DIR] %s\n", fullpath);
-            list_directory(fullpath, extra_ignored_dir);
+            list_directory(fullpath, extra_ignored_dirs, extra_ignored_count);
             continue;
         }
 
@@ -173,6 +181,11 @@ int list_directory(const char *path, const char *extra_ignored_dir) {
         if (S_ISREG(st.st_mode)) {
             if ((long long)st.st_size > MAX_FILE_SIZE) {
                 printf("[FILE TOO LARGE] %s (%lld bytes)\n\n", fullpath, (long long)st.st_size);
+                continue;
+            }
+
+            if (should_skip_file_without_extension(entry->d_name)) {
+                printf("[SKIPPED NO EXT] %s\n\n", fullpath);
                 continue;
             }
 
@@ -193,7 +206,8 @@ int list_directory(const char *path, const char *extra_ignored_dir) {
 
 int main(int argc, char **argv) {
     const char *path = ".";
-    const char *extra_ignored_dir = NULL;
+    char **extra_ignored_dirs = NULL;
+    int extra_ignored_count = 0;
 
     if (argc == 2 && strcmp(argv[1], "-h") == 0) {
         print_help(argv[0]);
@@ -220,21 +234,28 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (argc == 3 && strcmp(argv[1], "-i") == 0) {
-        extra_ignored_dir = argv[2];
-    } else if (argc == 4 && strcmp(argv[2], "-i") == 0) {
+    if (argc == 2 && strcmp(argv[1], "-i") == 0) {
+        fprintf(stderr, "uso: %s [directorio] [-i nombre_dir...]\n", argv[0]);
+        return 1;
+    }
+
+    if (argc >= 3 && strcmp(argv[1], "-i") == 0) {
+        extra_ignored_dirs = &argv[2];
+        extra_ignored_count = argc - 2;
+    } else if (argc >= 4 && strcmp(argv[2], "-i") == 0) {
         path = argv[1];
-        extra_ignored_dir = argv[3];
+        extra_ignored_dirs = &argv[3];
+        extra_ignored_count = argc - 3;
     } else if (argc == 2) {
         path = argv[1];
     } else if (argc != 1) {
-        fprintf(stderr, "uso: %s [directorio] [-i nombre_dir]\n", argv[0]);
+        fprintf(stderr, "uso: %s [directorio] [-i nombre_dir...]\n", argv[0]);
         return 1;
     }
 
     printf("rat: Procesando ruta %s\n\n\n", path);
 
-    if (list_directory(path, extra_ignored_dir) != 0) {
+    if (list_directory(path, extra_ignored_dirs, extra_ignored_count) != 0) {
         return 1;
     }
 
