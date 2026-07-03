@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.5.0-16a34a?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.8.0-16a34a?style=flat-square">
   <img alt="Language" src="https://img.shields.io/badge/C-111?style=flat-square&logo=c">
   <img alt="Platform" src="https://img.shields.io/badge/Unix%20CLI-111?style=flat-square">
   <img alt="Use case" src="https://img.shields.io/badge/contexto%20para-LLMs-0891b2?style=flat-square">
@@ -118,6 +118,8 @@ int main(){return 0;}
 - Ignora archivos sin extensión para evitar volcar binarios como ejecutables
 - No sigue symlinks como directorios
 - Omite archivos mayores a `1000 KB`
+- Permite ignorar directorios extra por nombre (`logs`) o ruta (`data/evidence/`)
+- Lee `.ratignore` desde la raíz procesada para omitir rutas persistentes
 - Genera una salida simple y copiable
 
 ## ⚙️ Opciones
@@ -126,7 +128,7 @@ int main(){return 0;}
 - `--version`: muestra la versión
 - `-di`: lista los directorios ignorados
 - `-ei`: lista las extensiones ignoradas
-- `-i <nombre_dir...>`: agrega uno o más directorios extra a ignorar en esta ejecución
+- `-i <nombre_o_ruta_dir...>`: agrega uno o más directorios extra a ignorar por nombre o ruta en esta ejecución
 
 ## 🚫 Extensiones ignoradas y filtros
 
@@ -165,6 +167,7 @@ gcc main.c -o rat
 ./rat -di
 ./rat -ei
 ./rat . -i vendor cache tmp
+./rat . -i data/back-matches/ data/evidence/ logs
 ./rat . | wl-copy
 ```
 
@@ -177,6 +180,25 @@ gcc main.c -o rat-cli
 ```
 
 Si no se especifica directorio, `rat` usa el directorio actual.
+
+## 📝 `.ratignore`
+
+Si existe un archivo `.ratignore` en el directorio que procesas, `rat` lo lee
+antes de recorrer el árbol. Cada línea representa un patrón a omitir.
+
+```text
+# comentarios y líneas vacías se ignoran
+logs/
+data/back-matches/
+data/evidence/
+src/secret.c
+src/*.tmp
+```
+
+Los patrones se comparan contra rutas relativas al directorio procesado. Por
+ejemplo, `main.c` solo omite `./main.c`; para omitir `src/main.c` debes escribir
+`src/main.c`. También puedes usar patrones simples como `src/*.tmp`. Las rutas
+de directorio aceptan `/` final, que es la forma natural de escribirlas en Linux.
 
 ## 🔍 Cómo funciona
 

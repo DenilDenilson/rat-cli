@@ -6,13 +6,16 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <limits.h>
+#include <ctype.h>
+#include <fnmatch.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
 #define MAX_FILE_SIZE (1000 * 1024)
-#define RAT_VERSION   "0.5.0"
+#define RAT_VERSION   "0.8.0"
+#define MAX_RATIGNORE_PATTERNS 256
 
 const char *ignored_dirs[] = {
     ".git",
@@ -36,6 +39,18 @@ const char *ignored_exts[] = {
     NULL
 };
 
+typedef struct {
+    char pattern[PATH_MAX];
+    int dir_only;
+} RatignorePattern;
+
+typedef struct {
+    RatignorePattern items[MAX_RATIGNORE_PATTERNS];
+    int count;
+} Ratignore;
+
+int join_path(char *buf, size_t bufsize, const char *base, const char *name);
+
 void print_string_list(const char *title, const char *items[]) {
     printf("%s\n", title);
 
@@ -45,23 +60,148 @@ void print_string_list(const char *title, const char *items[]) {
 }
 
 void print_help(const char *prog_name) {
-    printf("uso: %s [directorio] [-i nombre_dir...]\n", prog_name);
+    printf("uso: %s [directorio] [-i nombre_o_ruta_dir...]\n", prog_name);
     printf("\n");
     printf("Herramienta CLI para recorrer directorios recursivamente e imprimir archivos.\n");
+    printf("Lee .ratignore desde el directorio procesado si existe.\n");
     printf("\n");
     printf("Opciones:\n");
     printf("  -h, --help       muestra esta ayuda\n");
     printf("  --version        muestra la versión\n");
     printf("  -di              lista los directorios ignorados\n");
     printf("  -ei              lista las extensiones ignoradas\n");
-    printf("  -i nombre_dir... ignora además uno o más directorios por nombre en esta ejecución\n");
+    printf("  -i nombre_o_ruta_dir... ignora uno o más directorios por nombre o ruta en esta ejecución\n");
 }
 
-int should_skip_dir(const char *name, char **extra_ignored_dirs, int extra_ignored_count) {
+char *trim_whitespace(char *s) {
+    while (isspace((unsigned char)*s)) {
+        s++;
+    }
+
+    if (*s == '\0') {
+        return s;
+    }
+
+    char *end = s + strlen(s) - 1;
+    while (end > s && isspace((unsigned char)*end)) {
+        *end = '\0';
+        end--;
+    }
+
+    return s;
+}
+
+void normalize_dir_ref(const char *src, char *dst, size_t dst_size) {
+    if (dst_size == 0) return;
+
+    while (src[0] == '.' && src[1] == '/') {
+        src += 2;
+    }
+
+    size_t pos = 0;
+    while (src[pos] != '\0' && pos + 1 < dst_size) {
+        dst[pos] = src[pos];
+        pos++;
+    }
+
+    dst[pos] = '\0';
+
+    while (pos > 0 && dst[pos - 1] == '/') {
+        dst[pos - 1] = '\0';
+        pos--;
+    }
+}
+
+void load_ratignore(const char *root_path, Ratignore *ratignore) {
+    ratignore->count = 0;
+
+    char ratignore_path[PATH_MAX];
+    if (join_path(ratignore_path, sizeof(ratignore_path), root_path, ".ratignore") != 0) {
+        fprintf(stderr, "rat: ruta muy larga para .ratignore en '%s'\n", root_path);
+        return;
+    }
+
+    FILE *f = fopen(ratignore_path, "r");
+    if (!f) {
+        return;
+    }
+
+    char line[PATH_MAX];
+    while (fgets(line, sizeof(line), f) != NULL) {
+        char *pattern = trim_whitespace(line);
+
+        if (pattern[0] == '\0' || pattern[0] == '#') {
+            continue;
+        }
+
+        size_t pattern_len = strlen(pattern);
+        ratignore->items[ratignore->count].dir_only = pattern_len > 0 && pattern[pattern_len - 1] == '/';
+        normalize_dir_ref(pattern, ratignore->items[ratignore->count].pattern, PATH_MAX);
+
+        if (ratignore->items[ratignore->count].pattern[0] == '\0') {
+            continue;
+        }
+
+        ratignore->count++;
+        if (ratignore->count >= MAX_RATIGNORE_PATTERNS) {
+            fprintf(stderr, "rat: .ratignore superó el máximo de %d patrones\n", MAX_RATIGNORE_PATTERNS);
+            break;
+        }
+    }
+
+    fclose(f);
+}
+
+int path_matches_dir_ref(const char *path, const char *dir_ref) {
+    size_t path_len = strlen(path);
+    size_t ref_len = strlen(dir_ref);
+
+    if (ref_len == 0) return 0;
+
+    if (strcmp(path, dir_ref) == 0) {
+        return 1;
+    }
+
+    return path_len > ref_len
+        && path[path_len - ref_len - 1] == '/'
+        && strcmp(path + path_len - ref_len, dir_ref) == 0;
+}
+
+int path_matches_ignore_pattern(const char *name, const char *fullpath, const char *pattern) {
+    char normalized_fullpath[PATH_MAX];
+    normalize_dir_ref(fullpath, normalized_fullpath, sizeof(normalized_fullpath));
+
+    if (strchr(pattern, '/') == NULL) {
+        return strcmp(name, pattern) == 0;
+    }
+
+    return path_matches_dir_ref(normalized_fullpath, pattern);
+}
+
+int should_skip_by_ratignore(const char *relative_path, int is_dir, const Ratignore *ratignore) {
+    for (int i = 0; i < ratignore->count; i++) {
+        RatignorePattern item = ratignore->items[i];
+
+        if (item.dir_only && !is_dir) {
+            continue;
+        }
+
+        if (fnmatch(item.pattern, relative_path, FNM_PATHNAME) == 0) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int should_skip_dir(const char *name, const char *fullpath, char **extra_ignored_dirs, int extra_ignored_count) {
     if (name == NULL) return 1;
 
     for (int i = 0; i < extra_ignored_count; i++) {
-        if (strcmp(name, extra_ignored_dirs[i]) == 0) {
+        char normalized_ignored_dir[PATH_MAX];
+        normalize_dir_ref(extra_ignored_dirs[i], normalized_ignored_dir, sizeof(normalized_ignored_dir));
+
+        if (path_matches_ignore_pattern(name, fullpath, normalized_ignored_dir)) {
             return 1;
         }
     }
@@ -136,7 +276,7 @@ int join_path(char *buf, size_t bufsize, const char *base, const char *name) {
     return 0;
 }
 
-int list_directory(const char *path, char **extra_ignored_dirs, int extra_ignored_count) {
+int list_directory(const char *path, const char *relative_path, char **extra_ignored_dirs, int extra_ignored_count, const Ratignore *ratignore) {
     DIR *dir = opendir(path);
     if (!dir) {
         fprintf(stderr, "rat: no se pudo abrir '%s': '%s'\n", path, strerror(errno));
@@ -156,6 +296,12 @@ int list_directory(const char *path, char **extra_ignored_dirs, int extra_ignore
             continue;
         }
 
+        char child_relative_path[PATH_MAX];
+        if (join_path(child_relative_path, sizeof(child_relative_path), relative_path, entry->d_name) != 0) {
+            fprintf(stderr, "rat: ruta relativa muy larga: '%s/%s'\n", relative_path, entry->d_name);
+            continue;
+        }
+
         struct stat st;
         if (lstat(fullpath, &st) != 0) {
             fprintf(stderr, "rat: lstat falló en '%s': '%s'\n", fullpath, strerror(errno));
@@ -163,13 +309,18 @@ int list_directory(const char *path, char **extra_ignored_dirs, int extra_ignore
         }
 
         if (S_ISDIR(st.st_mode)) {
-            if (should_skip_dir(entry->d_name, extra_ignored_dirs, extra_ignored_count)) {
+            if (should_skip_by_ratignore(child_relative_path, 1, ratignore)) {
+                printf("[SKIPPED RATIGNORE DIR] %s\n", fullpath);
+                continue;
+            }
+
+            if (should_skip_dir(entry->d_name, fullpath, extra_ignored_dirs, extra_ignored_count)) {
                 printf("[SKIPPED DIR] %s\n", fullpath);
                 continue;
             }
 
             printf("[DIR] %s\n", fullpath);
-            list_directory(fullpath, extra_ignored_dirs, extra_ignored_count);
+            list_directory(fullpath, child_relative_path, extra_ignored_dirs, extra_ignored_count, ratignore);
             continue;
         }
 
@@ -179,6 +330,11 @@ int list_directory(const char *path, char **extra_ignored_dirs, int extra_ignore
         }
 
         if (S_ISREG(st.st_mode)) {
+            if (should_skip_by_ratignore(child_relative_path, 0, ratignore)) {
+                printf("[SKIPPED RATIGNORE FILE] %s\n\n", fullpath);
+                continue;
+            }
+
             if ((long long)st.st_size > MAX_FILE_SIZE) {
                 printf("[FILE TOO LARGE] %s (%lld bytes)\n\n", fullpath, (long long)st.st_size);
                 continue;
@@ -208,6 +364,7 @@ int main(int argc, char **argv) {
     const char *path = ".";
     char **extra_ignored_dirs = NULL;
     int extra_ignored_count = 0;
+    Ratignore ratignore;
 
     if (argc == 2 && strcmp(argv[1], "-h") == 0) {
         print_help(argv[0]);
@@ -235,7 +392,7 @@ int main(int argc, char **argv) {
     }
 
     if (argc == 2 && strcmp(argv[1], "-i") == 0) {
-        fprintf(stderr, "uso: %s [directorio] [-i nombre_dir...]\n", argv[0]);
+        fprintf(stderr, "uso: %s [directorio] [-i nombre_o_ruta_dir...]\n", argv[0]);
         return 1;
     }
 
@@ -249,13 +406,15 @@ int main(int argc, char **argv) {
     } else if (argc == 2) {
         path = argv[1];
     } else if (argc != 1) {
-        fprintf(stderr, "uso: %s [directorio] [-i nombre_dir...]\n", argv[0]);
+        fprintf(stderr, "uso: %s [directorio] [-i nombre_o_ruta_dir...]\n", argv[0]);
         return 1;
     }
 
     printf("rat: Procesando ruta %s\n\n\n", path);
 
-    if (list_directory(path, extra_ignored_dirs, extra_ignored_count) != 0) {
+    load_ratignore(path, &ratignore);
+
+    if (list_directory(path, "", extra_ignored_dirs, extra_ignored_count, &ratignore) != 0) {
         return 1;
     }
 
