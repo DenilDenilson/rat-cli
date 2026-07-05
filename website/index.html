@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>rat-llm - Turn your project into LLM context</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Geist:wght@400;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-cyan {
+            box-shadow: 0 0 8px rgba(93, 230, 255, 0.2);
+        }
+        .glow-lime {
+            box-shadow: 0 0 12px rgba(163, 230, 53, 0.4);
+        }
+        .hairline-border {
+            border: 1px solid #2D3139;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 0 12px rgba(163, 230, 53, 0.4);
+        }
+        .btn-secondary:hover {
+            background-color: rgba(93, 230, 255, 0.1);
+        }
+        .lang-toggle {
+            border: 1px solid #424936;
+            color: #c2cab0;
+        }
+        .lang-toggle[aria-pressed="true"] {
+            background: #a3e635;
+            border-color: #a3e635;
+            color: #213600;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#98da27",
+                        "on-error": "#690005",
+                        "on-tertiary-container": "#4d5b6f",
+                        "surface-container-low": "#1b1c1e",
+                        "surface-container-highest": "#343537",
+                        "surface": "#121315",
+                        "on-surface-variant": "#c2cab0",
+                        "surface-tint": "#98da27",
+                        "primary-fixed": "#b2f746",
+                        "surface-dim": "#121315",
+                        "surface-container-lowest": "#0d0e10",
+                        "on-surface": "#e3e2e5",
+                        "secondary-container": "#00cbe6",
+                        "secondary-fixed": "#a2eeff",
+                        "on-primary": "#213600",
+                        "on-tertiary-fixed-variant": "#3a485b",
+                        "inverse-on-surface": "#303033",
+                        "on-secondary-container": "#00515d",
+                        "inverse-primary": "#446900",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "secondary": "#5de6ff",
+                        "primary-container": "#a3e635",
+                        "on-primary-container": "#416400",
+                        "surface-container": "#1f2022",
+                        "on-primary-fixed": "#121f00",
+                        "on-secondary": "#00363e",
+                        "surface-container-high": "#292a2c",
+                        "tertiary-fixed-dim": "#b9c7df",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#d5e3fc",
+                        "primary": "#ccff80",
+                        "outline-variant": "#424936",
+                        "on-tertiary-fixed": "#0d1c2e",
+                        "surface-variant": "#343537",
+                        "on-background": "#e3e2e5",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "tertiary": "#e7efff",
+                        "error-container": "#93000a",
+                        "surface-bright": "#38393b",
+                        "on-tertiary": "#233144",
+                        "on-primary-fixed-variant": "#334f00",
+                        "outline": "#8c947c",
+                        "inverse-surface": "#e3e2e5",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#001f25",
+                        "tertiary-container": "#c5d3eb",
+                        "background": "#121315"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "gutter": "16px",
+                        "sm": "8px",
+                        "sidebar-width": "320px",
+                        "max-content-width": "1200px"
+                    },
+                    "fontFamily": {
+                        "code-base": ["JetBrains Mono"],
+                        "display-lg": ["Geist"],
+                        "code-bold": ["JetBrains Mono"],
+                        "headline-md": ["Geist"],
+                        "body-bold": ["Geist"],
+                        "body-base": ["Geist"],
+                        "label-sm": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "code-base": ["13px", { "lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                        "code-bold": ["13px", { "lineHeight": "20px", "letterSpacing": "0", "fontWeight": "700" }],
+                        "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-bold": ["14px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-base": ["14px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#0B0C0E] text-on-surface font-body-base antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar (Shared Component) -->
+<nav class="bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant fixed top-0 left-0 right-0 w-full z-50">
+<div class="max-w-max-content-width mx-auto w-full flex justify-between items-center gap-md px-lg py-md">
+<div class="font-code-bold flex items-center gap-2 text-code-bold text-primary dark:text-primary tracking-tighter">
+  <svg width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="16" y="16" width="480" height="480" rx="96" fill="#0B1117"/>
+
+    <!-- Ears -->
+    <circle cx="165" cy="160" r="74" fill="#B9F03A"/>
+    <circle cx="165" cy="160" r="34" fill="#0B1117"/>
+    <circle cx="347" cy="160" r="74" fill="#B9F03A"/>
+    <circle cx="347" cy="160" r="34" fill="#0B1117"/>
+
+    <!-- Head -->
+    <path d="M256 144C203 144 160 181 160 226C160 262 185 291 214 320C233 339 245 355 256 367C267 355 279 339 298 320C327 291 352 262 352 226C352 181 309 144 256 144Z" fill="#B9F03A"/>
+
+    <!-- Face extension / chin -->
+    <path d="M211 294C226 328 243 348 256 363C269 348 286 328 301 294C289 311 274 320 256 320C238 320 223 311 211 294Z" fill="#B9F03A"/>
+
+    <!-- Eyes -->
+    <circle cx="219" cy="239" r="16" fill="#0B1117"/>
+    <circle cx="293" cy="239" r="16" fill="#0B1117"/>
+
+    <!-- Nose -->
+    <path d="M244 312C244 302 252 296 256 296C260 296 268 302 268 312V315L259 330H253L244 315V312Z" fill="#0B1117"/>
+
+    <!-- Whiskers -->
+    <rect x="118" y="256" width="66" height="10" rx="5" transform="rotate(18 118 256)" fill="#B9F03A"/>
+    <rect x="113" y="284" width="71" height="10" rx="5" transform="rotate(-8 113 284)" fill="#B9F03A"/>
+    <rect x="118" y="312" width="66" height="10" rx="5" transform="rotate(-24 118 312)" fill="#B9F03A"/>
+
+    <rect x="328" y="276" width="66" height="10" rx="5" transform="rotate(-18 328 276)" fill="#B9F03A"/>
+    <rect x="328" y="284" width="71" height="10" rx="5" transform="rotate(8 328 284)" fill="#B9F03A"/>
+    <rect x="328" y="286" width="66" height="10" rx="5" transform="rotate(24 328 286)" fill="#B9F03A"/>
+  </svg>
+  <span class="text-lg">
+    rat-llm
+  </span>
+</div>
+<div class="hidden md:flex gap-lg">
+<a class="text-on-surface-variant dark:text-on-surface-variant font-body-base hover:text-primary dark:hover:text-primary-container transition-colors duration-200" data-i18n="nav.docs" href="https://github.com/DenilDenilson/rat-llm/blob/main/README.md" target="_blank">Docs</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-body-base hover:text-primary dark:hover:text-primary-container transition-colors duration-200" href="https://github.com/DenilDenilson/rat-llm" target="_blank">GitHub</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-body-base hover:text-primary dark:hover:text-primary-container transition-colors duration-200" data-i18n="nav.installation" href="#install">Installation</a>
+</div>
+<div class="flex items-center gap-sm">
+<div class="flex items-center bg-[#0B0C0E] rounded-DEFAULT overflow-hidden" aria-label="Language selector" data-i18n-aria-label="language.selector">
+<button class="lang-toggle font-code-bold text-label-sm px-sm py-xs transition-colors" type="button" data-lang="en" aria-pressed="true">EN</button>
+<button class="lang-toggle font-code-bold text-label-sm px-sm py-xs transition-colors border-l-0" type="button" data-lang="es" aria-pressed="false">ES</button>
+</div>
+<a class="bg-primary-container text-on-primary-container font-code-bold text-code-bold px-lg py-sm rounded-DEFAULT btn-primary transition-all" data-i18n="nav.getStarted" href="#install">Get Started</a>
+</div>
+</div>
+</nav>
+<main class="pt-[100px] max-w-max-content-width mx-auto px-lg">
+<!-- 1. Hero Section -->
+<section class="py-xl flex flex-col md:flex-row items-center gap-xl min-h-[819px]">
+<div class="md:w-1/2 flex flex-col gap-lg">
+<h1 class="font-display-lg text-display-lg text-on-surface" data-i18n="hero.title">
+                    Turn your project into LLM context. Instantly.
+                </h1>
+<p class="font-body-base text-body-base text-on-surface-variant max-w-[500px]" data-i18n="hero.subtitle">
+                    A high-performance CLI tool that traverses your repository and generates a clean, linear output ready for ChatGPT, Claude, and Gemini.
+                </p>
+<div class="flex gap-md pt-sm">
+<a class="bg-primary-container text-on-primary-container font-code-bold text-code-bold px-xl py-sm rounded-DEFAULT btn-primary transition-all flex items-center gap-xs" href="https://github.com/DenilDenilson/rat-llm/releases/tag/v0.8.1" target="_blank">
+<span class="material-symbols-outlined">download</span> <span data-i18n="hero.install">Install</span>
+                    </a>
+<a class="border border-secondary text-secondary bg-transparent font-code-bold text-code-bold px-xl py-sm rounded-DEFAULT btn-secondary transition-all flex items-center gap-xs" href="https://github.com/DenilDenilson/rat-llm" target="_blank">
+<span class="material-symbols-outlined">code</span> <span data-i18n="hero.github">View on GitHub</span>
+                    </a>
+</div>
+</div>
+<div class="md:w-1/2 w-full">
+<!-- Terminal Window Visual -->
+<div class="bg-[#16181C] hairline-border rounded-lg overflow-hidden flex flex-col glow-cyan relative group cursor-crosshair">
+<div class="h-8 border-b border-[#2D3139] flex items-center px-sm gap-xs bg-[#0B0C0E]">
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+<span class="font-code-base text-code-base text-on-surface-variant ml-sm">user@host: ~/project</span>
+</div>
+<div class="p-md font-code-base text-code-base text-[#e3e2e5] leading-relaxed">
+<div class="flex"><span class="text-secondary mr-sm">$</span> rat-llm . | wl-copy</div>
+<div class="text-secondary mt-xs">├─ [DIR] src</div>
+<div class="text-primary-container bg-[#1f2022] px-xs w-full">=== FILE: src/main.c ===</div>
+<div class="text-[#b9c7df]">#include <stdio.h></div>
+<div class="text-[#b9c7df]">int main() {</div>
+<div class="text-[#b9c7df] pl-md" data-i18n="terminal.print">printf("Generating context...\n");</div>
+<div class="text-[#b9c7df] pl-md">return 0;</div>
+<div class="text-[#b9c7df]">}</div>
+<div class="text-outline-variant italic mt-xs">├─ [SKIPPED DIR] node_modules</div>
+<div class="text-outline-variant italic">└─ [SKIPPED BY EXT] assets/image.jpg</div>
+<div class="mt-sm flex"><span class="text-secondary mr-sm">$</span> <span class="w-2 h-4 bg-secondary animate-pulse inline-block align-middle"></span></div>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. The Problem -->
+<section class="py-xl border-t border-[#2D3139]">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-lg" data-i18n="problem.title">The Context Problem</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md">
+<div class="bg-[#16181C] hairline-border p-md rounded-DEFAULT flex items-start gap-sm">
+<span class="material-symbols-outlined text-error">content_copy</span>
+<p class="font-body-bold text-body-bold" data-i18n="problem.copy">Manual copy-pasting is tedious.</p>
+</div>
+<div class="bg-[#16181C] hairline-border p-md rounded-DEFAULT flex items-start gap-sm">
+<span class="material-symbols-outlined text-error">extension_off</span>
+<p class="font-body-bold text-body-bold" data-i18n="problem.fragmented">Fragmented context breaks LLM reasoning.</p>
+</div>
+<div class="bg-[#16181C] hairline-border p-md rounded-DEFAULT flex items-start gap-sm">
+<span class="material-symbols-outlined text-error">delete</span>
+<p class="font-body-bold text-body-bold" data-i18n="problem.noise">Repo noise (builds, binaries) clutters input.</p>
+</div>
+<div class="bg-[#16181C] hairline-border p-md rounded-DEFAULT flex items-start gap-sm">
+<span class="material-symbols-outlined text-error">toll</span>
+<p class="font-body-bold text-body-bold" data-i18n="problem.tokens">IDE agents consume tokens too fast.</p>
+</div>
+</div>
+</section>
+<!-- 3. Workflow -->
+<section class="py-xl border-t border-[#2D3139] flex flex-col items-center">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xl self-start" data-i18n="workflow.title">Zero noise. Pure context.</h2>
+<div class="flex flex-col md:flex-row items-center gap-xl justify-center w-full max-w-[800px]">
+<div class="flex flex-col items-center gap-sm">
+<div class="w-16 h-16 rounded-full bg-[#16181C] hairline-border flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" style="font-size: 32px;">folder_zip</span>
+</div>
+<span class="font-code-bold text-code-bold text-on-surface-variant" data-i18n="workflow.repository">Repository</span>
+</div>
+<div class="hidden md:flex flex-1 h-px bg-[#2D3139] relative">
+<div class="absolute right-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 border-t border-r border-[#2D3139] rotate-45"></div>
+</div>
+<div class="flex flex-col items-center gap-sm">
+<div class="w-16 h-16 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center glow-lime">
+<span class="font-code-bold text-code-bold">rat-llm</span>
+</div>
+</div>
+<div class="hidden md:flex flex-1 h-px bg-[#2D3139] relative">
+<div class="absolute right-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 border-t border-r border-[#2D3139] rotate-45"></div>
+</div>
+<div class="flex flex-col items-center gap-sm">
+<div class="w-16 h-16 rounded-full bg-[#16181C] hairline-border flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container" style="font-size: 32px;">description</span>
+</div>
+<span class="font-code-bold text-code-bold text-on-surface-variant" data-i18n="workflow.cleanContext">Clean Context</span>
+</div>
+<div class="hidden md:flex flex-1 h-px bg-[#2D3139] relative">
+<div class="absolute right-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 border-t border-r border-[#2D3139] rotate-45"></div>
+</div>
+<div class="flex flex-col items-center gap-sm">
+<div class="w-16 h-16 rounded-full bg-[#16181C] hairline-border flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" style="font-size: 32px;">smart_toy</span>
+</div>
+<span class="font-code-bold text-code-bold text-on-surface-variant">LLM</span>
+</div>
+</div>
+</section>
+<!-- 4. Features (Bento Grid) -->
+<section class="py-xl border-t border-[#2D3139]">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-lg" data-i18n="features.title">Core Features</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="bg-[#16181C] hairline-border p-lg rounded-DEFAULT hover:border-secondary transition-colors group">
+<div class="mb-sm flex items-center gap-xs text-secondary group-hover:text-secondary-fixed">
+<span class="material-symbols-outlined">account_tree</span>
+<h3 class="font-code-bold text-code-bold" data-i18n="features.traversal.title">Recursive Traversal</h3>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant" data-i18n="features.traversal.body">Handles deep project structures efficiently, written in optimized C.</p>
+</div>
+<div class="bg-[#16181C] hairline-border p-lg rounded-DEFAULT hover:border-secondary transition-colors group">
+<div class="mb-sm flex items-center gap-xs text-secondary group-hover:text-secondary-fixed">
+<span class="material-symbols-outlined">filter_alt</span>
+<h3 class="font-code-bold text-code-bold" data-i18n="features.skip.title">Smart Skip</h3>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant" data-i18n="features.skip.body">Automatically ignores heavy build directories and binary assets.</p>
+</div>
+<div class="bg-[#16181C] hairline-border p-lg rounded-DEFAULT hover:border-primary-container transition-colors group">
+<div class="mb-sm flex items-center gap-xs text-primary-container group-hover:text-primary">
+<span class="material-symbols-outlined">settings_applications</span>
+<h3 class="font-code-bold text-code-bold">.ratignore</h3>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant" data-i18n="features.ratignore.body">Full control over what gets included with simple rules.</p>
+</div>
+<div class="bg-[#16181C] hairline-border p-lg rounded-DEFAULT hover:border-secondary transition-colors group">
+<div class="mb-sm flex items-center gap-xs text-secondary group-hover:text-secondary-fixed">
+<span class="material-symbols-outlined">compress</span>
+<h3 class="font-code-bold text-code-bold" data-i18n="features.size.title">File Size Limits</h3>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant" data-i18n="features.size.body">Avoid overwhelming the model with huge logs or generated files.</p>
+</div>
+<div class="bg-[#16181C] hairline-border p-lg rounded-DEFAULT hover:border-secondary transition-colors group">
+<div class="mb-sm flex items-center gap-xs text-secondary group-hover:text-secondary-fixed">
+<span class="material-symbols-outlined">security</span>
+<h3 class="font-code-bold text-code-bold" data-i18n="features.symlink.title">Symlink Safety</h3>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant" data-i18n="features.symlink.body">Prevents infinite loops or broken paths during traversal.</p>
+</div>
+<div class="bg-[#16181C] hairline-border p-lg rounded-DEFAULT hover:border-primary-container transition-colors group md:col-span-1">
+<div class="mb-sm flex items-center gap-xs text-primary-container group-hover:text-primary">
+<span class="material-symbols-outlined">input</span>
+<h3 class="font-code-bold text-code-bold" data-i18n="features.copy.title">Direct Copy</h3>
+</div>
+<p class="font-body-base text-body-base text-on-surface-variant" data-i18n="features.copy.body">Pipe output directly to clipboard or a specific output file.</p>
+</div>
+</div>
+</section>
+<!-- 5. Installation -->
+<section class="py-xl border-t border-[#2D3139]" id="install">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-lg" data-i18n="install.title">Installation</h2>
+<div class="flex flex-col gap-md max-w-3xl">
+<div class="bg-[#16181C] hairline-border rounded-DEFAULT overflow-hidden">
+<div class="px-md py-sm bg-[#0B0C0E] border-b border-[#2D3139] flex justify-between items-center">
+<span class="font-code-bold text-code-bold text-on-surface">Arch Linux</span>
+<button class="text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span></button>
+</div>
+<div class="p-md font-code-base text-code-base text-[#b9c7df]">
+<span class="text-secondary">$</span> sudo pacman -U rat-llm.pkg.tar.zst
+                    </div>
+</div>
+<div class="bg-[#16181C] hairline-border rounded-DEFAULT overflow-hidden">
+<div class="px-md py-sm bg-[#0B0C0E] border-b border-[#2D3139] flex justify-between items-center">
+<span class="font-code-bold text-code-bold text-on-surface" data-i18n="install.source">Source (Build)</span>
+<button class="text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span></button>
+</div>
+<div class="p-md font-code-base text-code-base text-[#b9c7df]">
+<span class="text-secondary">$</span> gcc -O2 -Wall -Wextra -pedantic src/main.c -o rat-llm<br/>
+<span class="text-secondary">$</span> sudo mv rat-llm /usr/local/bin/
+                    </div>
+</div>
+</div>
+</section>
+<!-- 6. Final CTA -->
+<section class="py-xl border-t border-[#2D3139] flex flex-col items-center text-center gap-lg">
+<h2 class="font-headline-md text-headline-md text-primary-container" data-i18n="cta.title">Built for developers who value their context window.</h2>
+<div class="flex gap-md mt-sm">
+<a class="bg-primary-container text-on-primary-container font-code-bold text-code-bold px-xl py-sm rounded-DEFAULT btn-primary transition-all flex items-center gap-xs" data-i18n="cta.install" href="https://github.com/DenilDenilson/rat-llm/releases/tag/v0.8.1" target="_blank">
+                    Install Now
+                </a>
+<a class="border border-secondary text-secondary bg-transparent font-code-bold text-code-bold px-xl py-sm rounded-DEFAULT btn-secondary transition-all flex items-center gap-xs" href="https://github.com/DenilDenilson/rat-llm" target="_blank">
+                    GitHub
+                </a>
+</div>
+</section>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-outline-variant dark:border-outline-variant w-full py-xl px-lg flex flex-col md:flex-row justify-between items-center gap-md max-w-max-content-width mx-auto transition-opacity duration-300 mt-xl">
+<div class="font-code-bold text-code-bold text-on-surface">rat-llm</div>
+<div class="font-body-base text-body-base text-on-surface-variant text-center md:text-left" data-i18n="footer.copy">
+            © 2024 rat-llm project. Built for high-density performance.
+        </div>
+<div class="flex gap-md font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant">
+<a class="hover:text-secondary dark:hover:text-secondary-fixed transition-colors" data-i18n="footer.docs" href="https://github.com/DenilDenilson/rat-llm/blob/main/README.md" target="_blank">Documentation</a>
+<a class="hover:text-secondary dark:hover:text-secondary-fixed transition-colors" data-i18n="footer.github" href="https://github.com/DenilDenilson/rat-llm" target="_blank">GitHub Repository</a>
+<a class="hover:text-secondary dark:hover:text-secondary-fixed transition-colors" data-i18n="footer.license" href="https://github.com/DenilDenilson/rat-llm/blob/main/LICENSE" target="_blank">License</a>
+<a class="hover:text-secondary dark:hover:text-secondary-fixed transition-colors" data-i18n="footer.changelog" href="https://github.com/DenilDenilson/rat-llm/blob/main/CHANGELOG.md" target="_blank">Changelog</a>
+</div>
+</footer>
+<script>
+const translations = {
+  en: {
+    title: "rat-llm - Turn your project into LLM context",
+    "language.selector": "Language selector",
+    "nav.docs": "Docs",
+    "nav.installation": "Installation",
+    "nav.getStarted": "Get Started",
+    "hero.title": "Turn your project into LLM context. Instantly.",
+    "hero.subtitle": "A high-performance CLI tool that traverses your repository and generates a clean, linear output ready for ChatGPT, Claude, and Gemini.",
+    "hero.install": "Install",
+    "hero.github": "View on GitHub",
+    "terminal.print": "printf(\"Generating context...\\n\");",
+    "problem.title": "The Context Problem",
+    "problem.copy": "Manual copy-pasting is tedious.",
+    "problem.fragmented": "Fragmented context breaks LLM reasoning.",
+    "problem.noise": "Repo noise (builds, binaries) clutters input.",
+    "problem.tokens": "IDE agents consume tokens too fast.",
+    "workflow.title": "Zero noise. Pure context.",
+    "workflow.repository": "Repository",
+    "workflow.cleanContext": "Clean Context",
+    "features.title": "Core Features",
+    "features.traversal.title": "Recursive Traversal",
+    "features.traversal.body": "Handles deep project structures efficiently, written in optimized C.",
+    "features.skip.title": "Smart Skip",
+    "features.skip.body": "Automatically ignores heavy build directories and binary assets.",
+    "features.ratignore.body": "Full control over what gets included with simple rules.",
+    "features.size.title": "File Size Limits",
+    "features.size.body": "Avoid overwhelming the model with huge logs or generated files.",
+    "features.symlink.title": "Symlink Safety",
+    "features.symlink.body": "Prevents infinite loops or broken paths during traversal.",
+    "features.copy.title": "Direct Copy",
+    "features.copy.body": "Pipe output directly to clipboard or a specific output file.",
+    "install.title": "Installation",
+    "install.source": "Source (Build)",
+    "cta.title": "Built for developers who value their context window.",
+    "cta.install": "Install Now",
+    "footer.copy": "© 2024 rat-llm project. Built for high-density performance.",
+    "footer.docs": "Documentation",
+    "footer.github": "GitHub Repository",
+    "footer.license": "License",
+    "footer.changelog": "Changelog"
+  },
+  es: {
+    title: "rat-llm - Convierte tu proyecto en contexto para LLMs",
+    "language.selector": "Selector de idioma",
+    "nav.docs": "Docs",
+    "nav.installation": "Instalación",
+    "nav.getStarted": "Empezar",
+    "hero.title": "Convierte tu proyecto en contexto para LLMs. Al instante.",
+    "hero.subtitle": "Una herramienta CLI de alto rendimiento que recorre tu repositorio y genera una salida limpia y lineal lista para ChatGPT, Claude o Gemini.",
+    "hero.install": "Instalar",
+    "hero.github": "Ver en GitHub",
+    "terminal.print": "printf(\"Generando contexto...\\n\");",
+    "problem.title": "El problema del contexto",
+    "problem.copy": "Copiar archivos a mano es tedioso.",
+    "problem.fragmented": "El contexto fragmentado rompe el razonamiento del LLM.",
+    "problem.noise": "El ruido del repo (builds, binarios) ensucia la entrada.",
+    "problem.tokens": "Los agentes en IDE consumen contexto muy rápido.",
+    "workflow.title": "Cero ruido. Contexto puro.",
+    "workflow.repository": "Repositorio",
+    "workflow.cleanContext": "Contexto limpio",
+    "features.title": "Funciones principales",
+    "features.traversal.title": "Recorrido recursivo",
+    "features.traversal.body": "Maneja estructuras profundas de proyecto de forma eficiente, escrito en C optimizado.",
+    "features.skip.title": "Omisión inteligente",
+    "features.skip.body": "Ignora automáticamente directorios pesados de build y assets binarios.",
+    "features.ratignore.body": "Control total sobre lo que se incluye usando reglas simples.",
+    "features.size.title": "Límites de tamaño",
+    "features.size.body": "Evita saturar el modelo con logs enormes o archivos generados.",
+    "features.symlink.title": "Seguridad con symlinks",
+    "features.symlink.body": "Evita loops infinitos o rutas rotas durante el recorrido.",
+    "features.copy.title": "Copia directa",
+    "features.copy.body": "Envía la salida directo al portapapeles o a un archivo específico.",
+    "install.title": "Instalación",
+    "install.source": "Fuente (compilación)",
+    "cta.title": "Hecho para desarrolladores que valoran su ventana de contexto.",
+    "cta.install": "Instalar ahora",
+    "footer.copy": "© 2024 proyecto rat-llm. Hecho para rendimiento de alta densidad.",
+    "footer.docs": "Documentación",
+    "footer.github": "Repositorio GitHub",
+    "footer.license": "Licencia",
+    "footer.changelog": "Cambios"
+  }
+};
+
+function getStoredLanguage() {
+  try {
+    return localStorage.getItem("rat-llm-language");
+  } catch (error) {
+    return null;
+  }
+}
+
+function setStoredLanguage(lang) {
+  try {
+    localStorage.setItem("rat-llm-language", lang);
+  } catch (error) {
+    // The language switcher still works even if storage is unavailable.
+  }
+}
+
+function applyLanguage(lang) {
+  const resolvedLang = translations[lang] ? lang : "en";
+  const dictionary = translations[resolvedLang];
+  document.documentElement.lang = resolvedLang;
+  document.title = dictionary.title;
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    const key = element.getAttribute("data-i18n");
+    if (dictionary[key]) {
+      element.textContent = dictionary[key];
+    }
+  });
+  document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+    const key = element.getAttribute("data-i18n-aria-label");
+    if (dictionary[key]) {
+      element.setAttribute("aria-label", dictionary[key]);
+    }
+  });
+  document.querySelectorAll("[data-lang]").forEach((button) => {
+    const isActive = button.getAttribute("data-lang") === resolvedLang;
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+  setStoredLanguage(resolvedLang);
+}
+
+const initialLanguage = getStoredLanguage() || "en";
+applyLanguage(initialLanguage);
+
+document.querySelectorAll("[data-lang]").forEach((button) => {
+  button.addEventListener("click", () => applyLanguage(button.getAttribute("data-lang")));
+});
+</script>
+</body></html>

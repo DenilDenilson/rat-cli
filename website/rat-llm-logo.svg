@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="#0B1117"/>
+
+  <!-- Ears -->
+  <circle cx="165" cy="160" r="74" fill="#B9F03A"/>
+  <circle cx="165" cy="160" r="34" fill="#0B1117"/>
+  <circle cx="347" cy="160" r="74" fill="#B9F03A"/>
+  <circle cx="347" cy="160" r="34" fill="#0B1117"/>
+
+  <!-- Head -->
+  <path d="M256 144C203 144 160 181 160 226C160 262 185 291 214 320C233 339 245 355 256 367C267 355 279 339 298 320C327 291 352 262 352 226C352 181 309 144 256 144Z" fill="#B9F03A"/>
+
+  <!-- Face extension / chin -->
+  <path d="M211 294C226 328 243 348 256 363C269 348 286 328 301 294C289 311 274 320 256 320C238 320 223 311 211 294Z" fill="#B9F03A"/>
+
+  <!-- Eyes -->
+  <circle cx="219" cy="239" r="16" fill="#0B1117"/>
+  <circle cx="293" cy="239" r="16" fill="#0B1117"/>
+
+  <!-- Nose -->
+  <path d="M244 312C244 302 252 296 256 296C260 296 268 302 268 312V315L259 330H253L244 315V312Z" fill="#0B1117"/>
+
+  <!-- Whiskers -->
+  <rect x="118" y="256" width="66" height="10" rx="5" transform="rotate(18 118 256)" fill="#B9F03A"/>
+  <rect x="113" y="284" width="71" height="10" rx="5" transform="rotate(-8 113 284)" fill="#B9F03A"/>
+  <rect x="118" y="312" width="66" height="10" rx="5" transform="rotate(-24 118 312)" fill="#B9F03A"/>
+
+  <rect x="328" y="276" width="66" height="10" rx="5" transform="rotate(-18 328 276)" fill="#B9F03A"/>
+  <rect x="328" y="284" width="71" height="10" rx="5" transform="rotate(8 328 284)" fill="#B9F03A"/>
+  <rect x="328" y="286" width="66" height="10" rx="5" transform="rotate(24 328 286)" fill="#B9F03A"/>
+</svg>
