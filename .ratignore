@@ -3,3 +3,4 @@ rat-llm/
 .ariadna/
 src/rat-llm
 *.zst
+rat-llm

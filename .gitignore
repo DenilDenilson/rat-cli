@@ -4,7 +4,7 @@ rat
 .ariadna
 
 pkg/
-src/
 *.pkg.tar.zst
 *.pkg.tar.zst.sig
 *.src.tar.gz
+rat-llm
