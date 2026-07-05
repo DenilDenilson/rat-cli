@@ -2,3 +2,9 @@ rat
 
 # Experimental proyect structure to ai
 .ariadna
+
+pkg/
+src/
+*.pkg.tar.zst
+*.pkg.tar.zst.sig
+*.src.tar.gz
