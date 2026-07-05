@@ -70,6 +70,62 @@ Esto es intencional: `rat` se mantiene granular y solo se encarga de producir la
 salida. El usuario decide si quiere verla en terminal, redirigirla a un archivo,
 pasarla a `wl-copy` o usar cualquier otra herramienta del sistema.
 
+## 📦 Instalación
+
+### Arch Linux
+
+Descarga el paquete `.pkg.tar.zst` desde la última release de GitHub y luego instálalo con `pacman`:
+
+```bash
+curl -LO https://github.com/DenilDenilson/rat-llm/releases/download/v0.8.1/rat-llm-git-0.8.1.r0.gde2e4cd-1-x86_64.pkg.tar.zst
+sudo pacman -U ./rat-llm-git-0.8.1.r0.gde2e4cd-1-x86_64.pkg.tar.zst
+```
+
+Luego verifica la instalación:
+
+```bash
+rat-llm --version
+rat-llm -h
+```
+
+### Compilar desde código fuente
+
+Si prefieres compilarlo manualmente:
+
+```bash
+git clone https://github.com/DenilDenilson/rat-llm.git
+cd rat-llm
+gcc -O2 -Wall -Wextra -pedantic src/main.c -o rat-llm
+```
+
+Para usarlo de forma local:
+
+```bash
+./rat-llm --version
+./rat-llm .
+```
+
+Si quieres instalar el binario manualmente en tu sistema:
+
+```bash
+sudo install -Dm755 rat-llm /usr/local/bin/rat-llm
+```
+
+Y luego:
+
+```bash
+rat-llm --version
+```
+
+### Instalación futura desde AUR
+
+Más adelante, cuando el paquete esté publicado en AUR, podrá instalarse con un helper como `yay`:
+
+```bash
+yay -S rat-llm-git
+```
+
+
 ## 🖥️ Demo de salida
 
 Cuando se ejecuta sobre `test/`, la herramienta produce una salida como esta:
